@@ -28,11 +28,11 @@ const setChildAtts = (el, parent) => {
     const imgSrcSet = el.getAttribute('data-srcSet')
     el.setAttribute('src', imgSrc)
     el.setAttribute('srcset', imgSrcSet)
-    el.style.filter = 'blur(0)'
   } else {
     imgSrc = parent.getAttribute('data-img-src')
     el.style.backgroundImage = `url(${imgSrc})`
   }
+  el.style.filter = 'blur(0)'
 }
 
 /**
@@ -61,9 +61,7 @@ const handleIntersect = (entries, observer) => {
 
     const child = setChildElement(entry.target)
 
-    if (child.localName === 'img') {
-      setChildStyle(child)
-    }
+    setChildStyle(child)
 
     if (entry.intersectionRatio > 0) {
       setChildAtts(child, entry.target)

@@ -78,24 +78,21 @@ class LazyLoader {
       
       
       if ($row->settings->lazy_loader === 'true') {
-        
+        $upload_dir = wp_upload_dir();
+        $baseurl = $upload_dir['baseurl'];
+
         $img_url = $row->settings->bg_image_src;
         $img_id = self::get_id_from_url($img_url);
-  
-
         $img_meta = wp_get_attachment_metadata($img_id);
 
-        $lazy_img_path = substr_replace($img_meta['file'], $img_meta['sizes']['lazy-load']['file'], 8);
+        $lazy_img_path = substr_replace($img_meta['file'], $img_meta['sizes']['bb-lazy-load']['file'], 8);
 
-        // this path may need to be cleared up
-        // is it always /content?
-        $lazy_img_src = WP_CONTENT_URL . '/uploads/' . $lazy_img_path;
+        $lazy_img_src = $baseurl . '/' . $lazy_img_path;
 
         $color = $row->settings->lazy_loader_color;
+
+        // set a background color in case the image fails
         $css .= '.fl-node-' . $id . ' > .fl-row-content-wrap { background-color: #' . $color . '; }';
-        // set a transparent gradient
-        // this way the bg image won't be shown since this will get priority
-        // $css .= '.fl-node-' . $id . ' > .fl-row-content-wrap { background-image: linear-gradient(transparent, transparent); }';
         $css .= '.fl-node-' . $id . ' > .fl-row-content-wrap { background-image: url("' . $lazy_img_src . '"); }';
 
       }
@@ -196,7 +193,7 @@ class LazyLoader {
    * @param string $url
    * @return int
    */
-  private static function get_id_from_url(string $url): id {
+  private static function get_id_from_url(string $url): string {
 
     global $wpdb;
     $query = "SELECT ID FROM {$wpdb->posts} WHERE guid='$url'";
