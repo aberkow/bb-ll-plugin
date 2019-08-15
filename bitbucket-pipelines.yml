@@ -1,0 +1,19 @@
+# BK's web-build-tools image
+# @url https://hub.docker.com/r/uconn/web-build-tools/
+image: uconn/web-build-tools
+
+pipelines:
+  branches:
+    develop:
+      - step:
+          script:
+            - composer archive --format=zip --file ${BITBUCKET_REPO_SLUG}-${BITBUCKET_BRANCH}
+            - curl -u ${BB_AUTH_STRING} -X POST "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"${BITBUCKET_REPO_SLUG}-${BITBUCKET_BRANCH}.zip"
+    master:
+      - step:
+          script:
+            # set the most recent tag as an environment variable.
+            - export GIT_TAG=`git describe --tags --abbrev=0`
+            - composer archive --format=zip --file ${BITBUCKET_REPO_SLUG}-${GIT_TAG}
+            - curl -u ${BB_AUTH_STRING} -X POST "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"${BITBUCKET_REPO_SLUG}-${GIT_TAG}.zip"
+            - "curl -X POST -is -u ${PIPELINES_AUTH_STRING} -H 'Content-Type: application/json' https://api.bitbucket.org/2.0/repositories/ucomm/composer-repository/pipelines/ -d '{\"target\":{\"ref_type\":\"branch\",\"type\":\"pipeline_ref_target\",\"ref_name\":\"master\"}}'"

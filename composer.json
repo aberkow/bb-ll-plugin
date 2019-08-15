@@ -1,0 +1,73 @@
+{
+    "name": "ucomm/bb-ll-plugin",
+    "description": "A plugin to enable lazy loading images with Beaver Builder.",
+    "type": "wordpress-plugin",
+    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "Adam Berkowitz",
+            "email": "adam.berkowitz@uconn.edu"
+        }
+    ],
+    "repositories": [{
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        },
+        {
+            "type": "composer",
+            "url": "https://packages.ucdev.net/"
+        }
+
+    ],
+    "require": {
+    },
+    "require-dev": {
+        "composer/installers": "~1.0",
+        "johnpbloch/wordpress": "@stable",
+        "ucomm/bb-plugin": "dev-master",
+        "ucomm/castor": "dev-master",
+        "wpackagist-plugin/query-monitor": "^3.3.6",
+        "wpackagist-plugin/regenerate-thumbnails": "dev-trunk",
+        "wpackagist-plugin/wordpress-importer": "*",
+        "wpackagist-theme/twentynineteen": "^1.4"
+    },
+    "extra": {
+        "installer-paths": {
+            "./www/content/plugins/{$name}": ["type:wordpress-plugin"],
+            "./www/content/themes/{$name}": ["type:wordpress-theme"]
+        },
+        "wordpress-install-dir": "./www/wordpress"
+    },
+    "config": {
+        "secure-http": true,
+        "sort-packages": true
+    },
+    "scripts": {
+        "build": [
+            "composer install --no-dev",
+            "npm install",
+            "gulp"
+        ],
+        "run-builds": "find . -maxdepth 1 -type d \\( ! -name . \\) -exec bash -c \"cd '{}' && pwd\" \\;",
+        "post-install-cmd": [
+            "cd www/content/plugins && find . -maxdepth 1 -type d \\( ! -name . \\) -exec bash -c \"cd '{}' && composer run-script build\" \\;",
+            "cd www/content/themes  && find . -maxdepth 1 -type d \\( ! -name . \\) -exec bash -c \"cd '{}' && composer run-script build\" \\;"
+        ],
+        "post-update-cmd": [
+            "cd www/content/plugins && find . -maxdepth 1 -type d \\( ! -name . \\) -exec bash -c \"cd '{}' && composer run-script build\" \\;",
+            "cd www/content/themes  && find . -maxdepth 1 -type d \\( ! -name . \\) -exec bash -c \"cd '{}' && composer run-script build\" \\;"
+        ]
+    },
+    "archive": {
+        "exclude": [
+            ".*",
+            "*.json",
+            "*.lock",
+            "*.yml",
+            "!.gitignore",
+            "!vendor/*",
+            "node_modules/",
+            "www/"
+        ]
+    }
+}

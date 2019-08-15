@@ -1,0 +1,9 @@
+*.log
+.DS_Store
+/build
+/vendor
+/www/*
+!/www/wp-config.php
+!/www/index.php
+!/www/content/uploads
+node_modules

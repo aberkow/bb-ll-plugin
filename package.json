@@ -1,0 +1,34 @@
+{
+  "name": "wp-project-boilerplate",
+  "version": "1.0.0",
+  "description": "A boilerplate for scaffolding new WordPress websites, themes and plugins.",
+  "main": "index.js",
+  "repository": "git@bitbucket.org:ucomm/wp-plugin-project-boilerplate.git",
+  "author": "UComm webteam",
+  "license": "MIT",
+  "scripts": {
+    "gulp": "gulp",
+    "gulp:watch": "gulp watch",
+    "gulp:clean": "gulp clean"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "babel-loader": "^8.0.6",
+    "browser-sync": "^2.26.7",
+    "del": "^4.1.1",
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^6.1.0",
+    "gulp-load-plugins": "^1.6.0",
+    "gulp-plumber": "^1.2.1",
+    "gulp-sass": "^4.0.2",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-uglify-es": "^1.0.4",
+    "node-sass": "^4.12.0",
+    "webpack-merge": "^4.2.1",
+    "webpack-stream": "^5.2.1"
+  },
+  "dependencies": {
+    "core-js": "^3.1.4"
+  }
+}

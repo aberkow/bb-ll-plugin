@@ -1,0 +1,51 @@
+version: "3"
+services:
+  web:
+    image: uconn/php72-official:latest
+    environment:
+      SITE_ENV: local
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # mount files/directories necessary for wordpress
+      - ./www:/var/www/html
+      - ./.entrypoint/server-entrypoint:/entrypoint
+      - ./:/var/www/html/content/plugins/bb-ll-plugin
+      - build:/var/www/html/content/plugins/bb-ll-plugin/build
+    depends_on:
+      - mysql
+    restart: always
+  mysql:
+    image: uconn/comm0db:latest
+    ports:
+      - "3306:3306"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+  local:
+    image: uconn/gulp-4:1.0.1
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes: 
+      # uncomment the following line to use your own entrypoint script
+      # can be useful for running multiple tasks in sequence
+      # - ./.entrypoint/local-dev-entrypoint.sh:/entrypoint.sh
+      - ./src:/project/src
+      - build:/project/build
+    # change to ["/entrypoint.sh"] to use mounted entrypoint script
+    entrypoint: ["gulp", "watch"]
+
+
+# define a volume to be shared between the local and server containers
+# changes made in the local dev container will be passed to the matching directory on the server.
+volumes:
+  build:
