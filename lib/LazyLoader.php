@@ -16,7 +16,7 @@ class LazyLoader {
 
     $lazy_loader = array(
       'type' => 'select',
-      'label' => __('Lazy Loaded Image', 'uconn-2019'),
+      'label' => __('Lazy Loaded Image(s)', 'uconn-2019'),
       'default' => 'false',
       'options' => array(
         'false' => __('Not Lazy Loaded', 'uconn-2019'),
@@ -32,15 +32,35 @@ class LazyLoader {
     );
 
 
-    if ($id === 'row') {
+    switch ($id) {
+      case 'row':
         $form['tabs']['style']['sections']['bg_photo']['fields']['lazy_loader'] = $lazy_loader;
         $form['tabs']['style']['sections']['bg_photo']['fields']['lazy_loader_color'] = $lazy_loader_bg;
+        break;
+      case 'gallery':
+        $form['general']['sections']['general']['fields']['lazy_loader'] = $lazy_loader;
+        $form['general']['sections']['general']['fields']['lazy_loader_color'] = $lazy_loader_bg;
+        break;
+      case 'photo':
+        $form['general']['sections']['general']['fields']['lazy_loader'] = $lazy_loader;
+        $form['general']['sections']['general']['fields']['lazy_loader_color'] = $lazy_loader_bg;
+        break;
+      default:
+        return $form;
+        break;
     }
 
-    if ($id === 'photo') {
-      $form['general']['sections']['general']['fields']['lazy_loader'] = $lazy_loader;
-      $form['general']['sections']['general']['fields']['lazy_loader_color'] = $lazy_loader_bg;
-    }
+
+
+    // if ($id === 'row') {
+    //     $form['tabs']['style']['sections']['bg_photo']['fields']['lazy_loader'] = $lazy_loader;
+    //     $form['tabs']['style']['sections']['bg_photo']['fields']['lazy_loader_color'] = $lazy_loader_bg;
+    // }
+
+    // if ($id === 'photo') {
+    //   $form['general']['sections']['general']['fields']['lazy_loader'] = $lazy_loader;
+    //   $form['general']['sections']['general']['fields']['lazy_loader_color'] = $lazy_loader_bg;
+    // }
 
 
     return $form;
@@ -133,7 +153,7 @@ class LazyLoader {
         $width = $selected_size_atts->width;
         $padding_bottom = ($height / $width) * 100;
 
-        $css .= '.fl-node-' . $id . ' > .fl-module-content { 
+        $css .= '.fl-node-' . $id . ' .fl-photo-content { 
           display: block; 
           height: 0; 
           padding-bottom:' . $padding_bottom . '%; 
@@ -162,31 +182,127 @@ class LazyLoader {
    */
   public static function filter_module_html(string $html, object $module): string {
 
-    $module_class = get_class($module);
-
-    if ($module_class !== 'FLPhotoModule' || $module->settings->lazy_loader !== 'true') {
+    if (!property_exists($module->settings, 'lazy_loader') ?? $module->settings->lazy_loader !== 'true') {
       return $html;
     }
+    
+    $module_class = get_class($module);
+ 
+    switch ($module_class) {
+      case 'FLPhotoModule':
+        $classes = $module->get_classes();
 
-    $classes = $module->get_classes();
+        // get image data
+        $id = $module->get_data()->id;
+        $alt = $module->data->alt;
+        $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
+        $img_meta = wp_get_attachment_metadata($id);
+        $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
+        $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
+        $photo_src = $module->settings->photo_src;
 
-    // get image data
-    $id = $module->get_data()->id;
-    $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
-    $img_meta = wp_get_attachment_metadata($id);
-    $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
-    $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
+        // create a buffer
+        $html = ob_start();
 
-    // convert data-img-src and data-srcSet to img atts w/ js
-    $html = "<img src='" . $lazy_src . "' srcset='' data-img-src='" . $module->settings->photo_src . "' data-srcSet='" . $img_srcset . "' sizes='" . $img_sizes . "' alt='" . $module->data->alt . "' class='" . $classes . "'/>";
+        // add the image data
+        include BB_LL_DIR . '/partials/photo-module.php';
 
-    // if people aren't using js, still give them an image
-    $html .= "<noscript>";
-    $html .= "<img src='" . $module->settings->photo_src . "' srcset='" . $img_srcset . "' sizes='" . $img_sizes . "' alt='" . $module->data->alt . "' class='" . $classes . "'/>";
-    $html .= "</noscript>";
+        // prepare to return
+        $html = ob_get_clean();
+        break;
+      case 'FLGalleryModule':
+
+        // for now, don't lazy load smugmug photos
+        if ($module->settings->source !== 'wordpress') {
+          break;
+        }
+
+        $photos_array = $module->settings->photo_data;
+        // $matches = array();
+        // preg_match_all('/<img[^>]+\>/', $html, $matches);
+
+        
+        // array_map(function($img) use ($photos_array) {
+          
+        //   echo "<pre>";
+        //   var_dump($img);
+        //   var_dump($photos_array);
+        //   echo "</pre>";
+
+        //   return $img;
+        // }, $matches[0]);
+
+        // array_map(function($id, $data) use ($matches) {
+
+        //   $raw_images = $matches[0];
+
+        //   $img_src = $data->src;
+
+        //   echo "<pre>";
+        //   var_dump($id);
+        //   var_dump($img_src);
+        //   var_dump($raw_images);
+        //   echo "</pre>";
+        //   return $data;
+        // }, array_keys($photos_array), $photos_array);
+
+
+
+
+
+        ob_start();
+
+        $test = preg_split('/<img[^>]+\>/', $html);
+        // echo "<pre>test! ";
+        // var_dump($test);
+        // echo "</pre>";
+
+
+          foreach ($test as $key => $value) {
+            echo "<pre> $key! ";
+            var_dump($value);
+            echo "</pre>";
+          }
+
+
+        foreach ($photos_array as $id => $data) {
+          $alt = $data->alt;
+          $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
+          $img_meta = wp_get_attachment_metadata($id);
+          $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
+          $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
+          $photo_src = $data->src;
+
+          // echo "<pre> test! ";
+          // var_dump($html);
+          // echo "</pre>";
+
+
+          // $test = preg_match('/<img[^>]+\>/', $html);
+          $file = file_get_contents(BB_LL_DIR . '/partials/image.php');
+
+          // str_ireplace('/<img[^>]+\>/', $file, $html);
+
+          $html .= preg_replace('/<img[^>]+\>/', $file, $html);
+
+        }
+        
+        $html = ob_get_clean();
+
+        
+        // $html = ob_start();
+        // include BB_LL_DIR . '/partials/gallery-module.php';
+        // $html = ob_get_clean();
+        break;
+      default:
+        // exit safely just in case
+        return $html;
+        break;
+    }
 
     return $html;
   }
+
   /**
    * Query the database to get id's of images based on their URL
    *
