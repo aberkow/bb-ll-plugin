@@ -243,12 +243,12 @@ class LazyLoader {
         foreach ($images as $image) {
           // get the original src for each image
           // use it to match
-          $original_src = $image->getAttribute('src');
+          $photo_src = $image->getAttribute('src');
 
           // add new properties to the image data
-          $current_image_data = array_filter($photos_array, function($data, $id) use ($original_src) {
+          $current_image_data = array_filter($photos_array, function($data, $id) use ($photo_src) {
 
-            $original_filename = pathinfo($original_src, PATHINFO_FILENAME);
+            $original_filename = pathinfo($photo_src, PATHINFO_FILENAME);
             $data_filename = pathinfo($data->src, PATHINFO_FILENAME);
 
             if (strpos($original_filename, $data_filename) !== false) {
@@ -262,7 +262,19 @@ class LazyLoader {
 
           $current_image_data = array_shift($current_image_data);
 
+
           $image->setAttribute('src', $current_image_data->lazy_src);
+          $image->setAttribute('srcSet', '');
+          $image->setAttribute('data-img-src', $photo_src);
+          $image->setAttribute('data-srcSet', $current_image_data->img_srcset);
+          $image->setAttribute('sizes', $current_image_data->img_sizes);
+
+          // trying to create a noscript fallback but this doesn't work yet
+          $no_script = $domDocument->createElement('noscript');
+          // $domContent->importNode($no_script);
+
+          // $image->appendChild($no_script);
+
 
         }
 
