@@ -237,33 +237,54 @@ class LazyLoader {
         // use xpath syntax to get an array of images
         $images = $xpath->evaluate("//*[@class='fl-mosaicflow']//img");
 
-        echo "<pre>images! ";
-        var_dump($images);
+        // get the data for the photos
+        $photos_array = $module->settings->photo_data;
+
+        $test = \has_image_size('bb-lazy-load');
+
+        echo "<pre> has image size ";
+        var_dump($test);
         echo "</pre>";
 
+        foreach ($images as $image) {
+          // get the original src for each image
+          // use it to match
+          $original_src = $image->getAttribute('src');
 
-        // echo "<pre>";
-        // var_dump($html);
-        // echo "</pre>";
-        // $images = $domContent
+          // add new properties to the image data
+          $current_image_data = array_filter($photos_array, function($data, $id) use ($original_src) {
+            if ($original_src === $data->src) {
+              $data->lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
+              $data->img_meta = wp_get_attachment_metadata($id);
+              return $data;
+            }
+          }, ARRAY_FILTER_USE_BOTH);
 
 
 
-        $photos_array = $module->settings->photo_data;
-       
 
+          echo "<pre>test! ";
+          var_dump($current_image_data);
+          echo "</pre>";
 
-        foreach ($photos_array as $id => $data) {
-          $alt = $data->alt;
-          $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
-          $img_meta = wp_get_attachment_metadata($id);
-          $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
-          $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
-          $photo_src = $data->src;
-
+          
 
 
         }
+
+        // foreach ($photos_array as $id => $data) {
+        //   $alt = $data->alt;
+        //   $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
+        //   $img_meta = wp_get_attachment_metadata($id);
+        //   $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
+        //   $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
+        //   $photo_src = $data->src;
+        // }
+        
+        
+       
+
+
         
         // $html = ob_get_clean();
 
