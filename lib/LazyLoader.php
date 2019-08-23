@@ -182,6 +182,11 @@ class LazyLoader {
    */
   public static function filter_module_html(string $html, object $module): string {
 
+    echo "<pre>";
+    var_dump($module->settings->lazy_loader);
+    echo "</pre>";
+    
+
     if (!property_exists($module->settings, 'lazy_loader') ?? $module->settings->lazy_loader !== 'true') {
       return $html;
     }
@@ -234,7 +239,8 @@ class LazyLoader {
         // prepare to get images by selecting them
         $xpath = new \DOMXPath($domDocument);
 
-        // use xpath syntax to get an array of images
+        // use xpath syntax to get an array of images and links
+        $links = $xpath->evaluate("//*[@class='fl-mosaicflow']//img");
         $images = $xpath->evaluate("//*[@class='fl-mosaicflow']//img");
 
         // get the data for the photos
@@ -268,13 +274,6 @@ class LazyLoader {
           $image->setAttribute('data-img-src', $photo_src);
           $image->setAttribute('data-srcSet', $current_image_data->img_srcset);
           $image->setAttribute('sizes', $current_image_data->img_sizes);
-
-          // trying to create a noscript fallback but this doesn't work yet
-          $no_script = $domDocument->createElement('noscript');
-          // $domContent->importNode($no_script);
-
-          // $image->appendChild($no_script);
-
 
         }
 
