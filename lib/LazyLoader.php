@@ -186,6 +186,20 @@ class LazyLoader {
       return $html;
     }
     
+    // prepare to filter the html of the images
+    $domDocument = new \DOMDocument;
+
+    // check that there's content
+    $domContent = $domDocument->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES'));
+
+    // exit early if something goes wrong
+    if (!$domContent) {
+      echo "<pre>";
+      var_dump('something happened...');
+      echo "</pre>";
+      return $html;
+    }
+
     $module_class = get_class($module);
  
     switch ($module_class) {
@@ -217,52 +231,26 @@ class LazyLoader {
           break;
         }
 
-        $photos_array = $module->settings->photo_data;
-        // $matches = array();
-        // preg_match_all('/<img[^>]+\>/', $html, $matches);
+        // prepare to get images by selecting them
+        $xpath = new \DOMXPath($domDocument);
 
-        
-        // array_map(function($img) use ($photos_array) {
-          
-        //   echo "<pre>";
-        //   var_dump($img);
-        //   var_dump($photos_array);
-        //   echo "</pre>";
+        // use xpath syntax to get an array of images
+        $images = $xpath->evaluate("//*[@class='fl-mosaicflow']//img");
 
-        //   return $img;
-        // }, $matches[0]);
-
-        // array_map(function($id, $data) use ($matches) {
-
-        //   $raw_images = $matches[0];
-
-        //   $img_src = $data->src;
-
-        //   echo "<pre>";
-        //   var_dump($id);
-        //   var_dump($img_src);
-        //   var_dump($raw_images);
-        //   echo "</pre>";
-        //   return $data;
-        // }, array_keys($photos_array), $photos_array);
+        echo "<pre>images! ";
+        var_dump($images);
+        echo "</pre>";
 
 
-
-
-
-        ob_start();
-
-        $test = preg_split('/<img[^>]+\>/', $html);
-        // echo "<pre>test! ";
-        // var_dump($test);
+        // echo "<pre>";
+        // var_dump($html);
         // echo "</pre>";
+        // $images = $domContent
 
 
-          foreach ($test as $key => $value) {
-            echo "<pre> $key! ";
-            var_dump($value);
-            echo "</pre>";
-          }
+
+        $photos_array = $module->settings->photo_data;
+       
 
 
         foreach ($photos_array as $id => $data) {
@@ -273,26 +261,13 @@ class LazyLoader {
           $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
           $photo_src = $data->src;
 
-          // echo "<pre> test! ";
-          // var_dump($html);
-          // echo "</pre>";
 
-
-          // $test = preg_match('/<img[^>]+\>/', $html);
-          $file = file_get_contents(BB_LL_DIR . '/partials/image.php');
-
-          // str_ireplace('/<img[^>]+\>/', $file, $html);
-
-          $html .= preg_replace('/<img[^>]+\>/', $file, $html);
 
         }
         
-        $html = ob_get_clean();
-
-        
-        // $html = ob_start();
-        // include BB_LL_DIR . '/partials/gallery-module.php';
         // $html = ob_get_clean();
+
+        // return $html;
         break;
       default:
         // exit safely just in case
