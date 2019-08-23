@@ -240,12 +240,6 @@ class LazyLoader {
         // get the data for the photos
         $photos_array = $module->settings->photo_data;
 
-        $test = \has_image_size('bb-lazy-load');
-
-        echo "<pre> has image size ";
-        var_dump($test);
-        echo "</pre>";
-
         foreach ($images as $image) {
           // get the original src for each image
           // use it to match
@@ -253,42 +247,27 @@ class LazyLoader {
 
           // add new properties to the image data
           $current_image_data = array_filter($photos_array, function($data, $id) use ($original_src) {
-            if ($original_src === $data->src) {
+
+            $original_filename = pathinfo($original_src, PATHINFO_FILENAME);
+            $data_filename = pathinfo($data->src, PATHINFO_FILENAME);
+
+            if (strpos($original_filename, $data_filename) !== false) {
               $data->lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
+              $data->img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
+              $data->img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
               $data->img_meta = wp_get_attachment_metadata($id);
               return $data;
             }
           }, ARRAY_FILTER_USE_BOTH);
 
+          $current_image_data = array_shift($current_image_data);
 
-
-
-          echo "<pre>test! ";
-          var_dump($current_image_data);
-          echo "</pre>";
-
-          
-
+          $image->setAttribute('src', $current_image_data->lazy_src);
 
         }
 
-        // foreach ($photos_array as $id => $data) {
-        //   $alt = $data->alt;
-        //   $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
-        //   $img_meta = wp_get_attachment_metadata($id);
-        //   $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
-        //   $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
-        //   $photo_src = $data->src;
-        // }
-        
-        
-       
-
-
-        
-        // $html = ob_get_clean();
-
-        // return $html;
+        // save the html back and return
+        return $domDocument->saveHTML();
         break;
       default:
         // exit safely just in case
