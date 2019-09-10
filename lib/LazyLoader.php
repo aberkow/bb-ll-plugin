@@ -182,28 +182,23 @@ class LazyLoader {
    */
   public static function filter_module_html(string $html, object $module): string {
 
-    echo "<pre>";
-    var_dump($module->settings->lazy_loader);
-    echo "</pre>";
-    
-
     if (!property_exists($module->settings, 'lazy_loader') ?? $module->settings->lazy_loader !== 'true') {
       return $html;
     }
     
     // prepare to filter the html of the images
-    // $domDocument = new \DOMDocument;
+    $domDocument = new \DOMDocument;
 
     // check that there's content
-    // $domContent = $domDocument->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES'));
+    $domContent = $domDocument->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES'));
 
     // exit early if something goes wrong
-    // if (!$domContent) {
-    //   echo "<pre>";
-    //   var_dump('something happened...');
-    //   echo "</pre>";
-    //   return $html;
-    // }
+    if (!$domContent) {
+      echo "<pre>";
+      var_dump('something happened...');
+      echo "</pre>";
+      return $html;
+    }
 
     $module_class = get_class($module);
  
@@ -230,117 +225,59 @@ class LazyLoader {
         $html = ob_get_clean();
         break;
 
-
       case 'FLGalleryModule':
 
+        // for now, don't lazy load smugmug photos
         if ($module->settings->source !== 'wordpress') {
           break;
         }
 
+        // prepare to get images by selecting them
+        $xpath = new \DOMXPath($domDocument);
+
+        // use xpath syntax to get an array of images and links
+        $links = $xpath->evaluate("//*[@class='fl-mosaicflow']//a");
+        $images = $xpath->evaluate("//div[@data-lazy-loaded='true']//*[@class='fl-mosaicflow']//img");
+
+        // get the data for the photos
         $photos_array = $module->settings->photo_data;
 
-        $updated_data = array_map(function($photo) {
-          $id = $photo->id;
-          $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
-          $img_meta = wp_get_attachment_metadata($id);
-          $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
-          $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
-          return array(
-            'lazy-src' => $lazy_src,
-            'img-meta' => $img_meta,
-            'img-srcset' => $img_srcset,
-            'img-sizes' => $img_sizes
-          );
-        }, $module->get_photos());
+        foreach ($images as $image) {
+          // get the original src for each image
+          // use it to match
+          $photo_src = $image->getAttribute('src');
 
-        echo "<pre>";
-        var_dump($updated_data);
-        echo "</pre>";
+          // add new properties to the image data
+          $current_image_data = array_filter($photos_array, function($data, $id) use ($photo_src) {
 
-        // foreach ($module->get_photos() as $id => $photo) {
+            $original_filename = pathinfo($photo_src, PATHINFO_FILENAME);
+            $data_filename = pathinfo($data->src, PATHINFO_FILENAME);
 
+            if (strpos($original_filename, $data_filename) !== false) {
+              $data->img_meta = wp_get_attachment_metadata($id);
+              $data->lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
+              $data->img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
+              $data->img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
+              return $data;
+            }
+          }, ARRAY_FILTER_USE_BOTH);
 
-
-        //   $photo_src = $photo->src;
-
-        //   $lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
-        //   $img_meta = wp_get_attachment_metadata($id);
-        //   $img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
-        //   $img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
+          $current_image_data = array_shift($current_image_data);
 
 
-        //   $replacement = "<img src='$lazy_src'><noscript><img src='$lazy_src'></noscript>";
-
-
-        // }
-
-        
-        return $html;
+          $image->setAttribute('src', $current_image_data->lazy_src);
+          $image->setAttribute('srcSet', '');
+          $image->setAttribute('data-img-src', $photo_src);
+          $image->setAttribute('data-srcSet', $current_image_data->img_srcset);
+          $image->setAttribute('sizes', $current_image_data->img_sizes);
 
 
 
+        }
 
+        // save the html back and return
+        return $domDocument->saveHTML();
         break;
-      // case 'FLGalleryModule':
-
-      //   // for now, don't lazy load smugmug photos
-      //   if ($module->settings->source !== 'wordpress') {
-      //     break;
-      //   }
-
-      //   // prepare to get images by selecting them
-      //   $xpath = new \DOMXPath($domDocument);
-
-      //   // use xpath syntax to get an array of images and links
-      //   $links = $xpath->evaluate("//*[@class='fl-mosaicflow']//a");
-      //   $images = $xpath->evaluate("//*[@class='fl-mosaicflow']//img");
-
-      //   // get the data for the photos
-      //   $photos_array = $module->settings->photo_data;
-
-      //   foreach ($images as $image) {
-      //     // get the original src for each image
-      //     // use it to match
-      //     $photo_src = $image->getAttribute('src');
-
-      //     // add new properties to the image data
-      //     $current_image_data = array_filter($photos_array, function($data, $id) use ($photo_src) {
-
-      //       $original_filename = pathinfo($photo_src, PATHINFO_FILENAME);
-      //       $data_filename = pathinfo($data->src, PATHINFO_FILENAME);
-
-      //       if (strpos($original_filename, $data_filename) !== false) {
-      //         $data->lazy_src = wp_get_attachment_image_src($id, 'bb-lazy-load', false)[0];
-      //         $data->img_srcset = wp_get_attachment_image_srcset($id, 'large', $img_meta);
-      //         $data->img_sizes = wp_get_attachment_image_sizes($id,'large', $img_meta);
-      //         $data->img_meta = wp_get_attachment_metadata($id);
-      //         return $data;
-      //       }
-      //     }, ARRAY_FILTER_USE_BOTH);
-
-      //     $current_image_data = array_shift($current_image_data);
-
-
-      //     $image->setAttribute('src', $current_image_data->lazy_src);
-      //     $image->setAttribute('srcSet', '');
-      //     $image->setAttribute('data-img-src', $photo_src);
-      //     $image->setAttribute('data-srcSet', $current_image_data->img_srcset);
-      //     $image->setAttribute('sizes', $current_image_data->img_sizes);
-
-      //     $no_script = $domDocument->createElement('noscript');
-
-      //     for ($i = 0; $i < $links->length; $i++) {
-      //       $links[$i]->appendChild($no_script);
-      //     }
-
-      //     $domDocument->importNode($no_script);
-
-
-      //   }
-
-      //   // save the html back and return
-      //   return $domDocument->saveHTML();
-      //   break;
       default:
         // exit safely just in case
         return $html;
