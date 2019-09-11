@@ -44,6 +44,9 @@
     },
     "scripts": {
         "build": [
+            "./scripts/build.sh"
+        ],
+        "build-test": [
             "composer install --no-dev",
             "npm install",
             "gulp"
