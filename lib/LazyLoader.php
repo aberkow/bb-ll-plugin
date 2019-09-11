@@ -114,7 +114,12 @@ class LazyLoader {
 
     foreach ($nodes['modules'] as $id => $module) {
       $module_class = get_class($module);
-      if ($module_class === 'FLPhotoModule') {
+
+      if (!isset($module->settings->lazy_loader) || $module->settings->lazy_loader === 'false') {
+        return $css;
+      }
+
+      if ($module_class === 'FLPhotoModule' && $module->settings->lazy_loader === 'true') {
 
         $img_data = $module->get_data();
         $img_sizes_arr = (array)$img_data->sizes;
