@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "begin composer install"
+composer install --no-dev
+echo "end composer install"
+
 echo "begin npm install"
 npm install
 echo "end npm install"
